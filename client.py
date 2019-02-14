@@ -1,8 +1,7 @@
 # Программа клиента, запрашивающего текущее время
-import json
 import socket
 import sys
-from JIMProtocol import MessageBuilder, JSONMessageEncoder
+from JIMProtocol import MessageBuilder
 
 class Client:
     _client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,7 +19,7 @@ class Client:
     def parse_response(self, response):
         response = response.decode("ascii")
         print(response)
-        parsed_response = JSONMessageEncoder().message_decode(response)
+        parsed_response = MessageBuilder.get_object_of_json(response)
         print(parsed_response.response)
         print(parsed_response.alert)
 
@@ -28,9 +27,7 @@ class Client:
         if self.login is None:
             self.login = input("Login:")
         gen_message = MessageBuilder.create_presence_message(self.login)
-        # gen_message_json = JSONMessageEncoder().encode(gen_message)
-        # print(gen_message)print(gen_message)
-        gen_message_json = JSONMessageEncoder().encode(gen_message)
+        gen_message_json = gen_message.encode_to_json()
         self._client_socket.send(gen_message_json.encode('ascii'))
 
     def __del__(self):

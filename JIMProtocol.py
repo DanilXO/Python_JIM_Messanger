@@ -11,17 +11,9 @@ class JSONMessageEncoder(json.JSONEncoder):
     def default(self, obj):
         return obj.__dict__
 
-    @staticmethod
-    def message_decode(json_msg):
-        """
-        :param json_msg: принимаемое сообщение
-        :return: объект типа MessageBuilder
-        """
-        return json.JSONDecoder(object_hook=MessageBuilder).decode(json_msg)
 
 
-
-class MessageBuilder(json.JSONEncoder):
+class MessageBuilder:
     """
     Класс описывающий фабричные методы, генерирующие соответствующие сообщения
     """
@@ -35,6 +27,22 @@ class MessageBuilder(json.JSONEncoder):
                 setattr(self, key, sub_val)
             else:
                 setattr(self, key, val)
+
+    def encode_to_json(self):
+        """
+        Кодируем объект в json
+        :return: json представление MessageBuilder
+        """
+        return JSONMessageEncoder().encode(self)
+
+    @staticmethod
+    def get_object_of_json(json_obj):
+        """
+        Декодируем из json в MessageBuilder
+        :return: presence message (type = MessageBuilder)
+        """
+        return json.JSONDecoder(object_hook=MessageBuilder).decode(json_obj)
+
 
     @staticmethod
     def create_presence_message(name, time=time.ctime()):
