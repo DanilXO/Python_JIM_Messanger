@@ -1,8 +1,15 @@
 # Программа сервера времени
+import select
 import socket
 import sys
 from JIMProtocol import MessageBuilder
-
+import baselogerconfig
+import  logging
+log = logging.getLogger('messenger.server')
+log.propagate = False
+# log.addHandler(logging.StreamHandler(sys.stderr))
+log.addHandler(logging.StreamHandler(sys.stdout))
+log.critical("Can't connect to %s at port %d", 'localhost', 8888)
 class Server:
     _server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Создает сокет TCP
     connections = []
@@ -11,22 +18,41 @@ class Server:
         self._server_socket.bind((ip, port))  # Присваивает порт 8888
         self._server_socket.listen(5)  # Переходит в режим ожидания запросов;
         # одновременно обслуживает не более 5 запросов
+        self._server_socket.settimeout(0.5) # Необходимо, чтобы не ждать появление данных в сокете
         print('Server started...')
 
     def run(self):
         while True:
+            try:
                 client, addr = self._server_socket.accept()  # Принять запрос на соединение
+            except OSError as ex:
+                pass # timeout вышел и ничего оне произошло
+            else:
                 print("Получен запрос на соединение от %s" % str(addr))
-                data = client.recv(1024)  # Принять не более 1024 байтов данных
-                self.parse_message(client, data)
+                self.connections.append(client)
+            finally:
+                r = []
+                w = []
+                try:
+                    r, w, e = select.select(self.connections, self.connections,[],0)
+                except Exception as e:
+                    pass #Исключение произойдет, если какой-то клиент отключился
+                        # Ничего не делаем...
+                for client in r:
+                    data = client.recv(1024)  # Принять не более 1024 байтов данных
+                    parsed_msg = self.parse_message(data)
+                    try:
+                        if parsed_msg.action == "presence" and (client in w):
+                            self.send_responce(client, 200, "{} is currently present.".format(parsed_msg.user.name))
+                    except:
+                        self.connections.remove(client)
 
-    def parse_message(self, client, msg):
+
+    def parse_message(self, msg):
         msg = msg.decode("ascii")
         print(msg)
         parsed_msg = MessageBuilder.get_object_of_json(msg)
-        # parsed_msg = json.JSONDecoder(object_hook=MessageBuilder).decode(msg)
-        if parsed_msg.action == "presence":
-            self.send_responce(client, 200, "{} is currently present.".format(parsed_msg.user.name))
+        return parsed_msg
 
     def send_responce(self, client, code, alert=None):
         gen_response = MessageBuilder.create_response_message(code, alert)
