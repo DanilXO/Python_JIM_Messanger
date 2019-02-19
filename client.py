@@ -3,9 +3,8 @@ import socket
 import sys
 from JIMProtocol import MessageBuilder
 import baselogerconfig
-import  logging
-log = logging.getLogger('messenger.client')
-log.critical("Can't connect to %s at port %d", 'localhost', 8888)
+# from log_config import log
+
 class Client:
     _client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     def __init__(self, server_address='localhost', port=8888):

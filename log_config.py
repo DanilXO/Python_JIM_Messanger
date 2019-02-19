@@ -1,0 +1,53 @@
+import logging
+import time
+import inspect
+import sys
+
+logging.basicConfig(
+    filename="messenger.log",
+    format="%(asctime)s %(levelname)-10s %(module)s %(funcName)s %(message)s",
+    level=logging.INFO,
+    filemode="a"
+)
+
+# В данном примере аналогичен базовой настройке, но может быть и другим
+main_format = logging.Formatter("%(asctime)s %(levelname)-10s %(module)s %(funcName)s %(message)s")
+
+handler1 = logging.FileHandler("messenger.log")
+# handler2 = logging.StreamHandler(sys.stdout)
+
+handler1.setFormatter(main_format)
+# handler2.setFormatter(main_format)
+
+main_log = logging.getLogger('messanger')
+main_log.setLevel(logging.INFO)
+main_log.addHandler(handler1)
+# main_log.addHandler(handler2)
+main_log.propagate = False
+
+def log(func):
+    def wrapped(*args, **kwargs):
+        # добавляем вместо %(message)s аргументы нашей функции
+        main_log.info("%s ", tuple(args))
+        r = func (*args, **kwargs)
+        return r
+    return wrapped
+
+#ЗАЧЕМ ВЕЛОСИПЕДЫ? А ЕСЛИ ХОТИМ ЛОГИРОВАТЬ В ПОТОК ИЛИ В ДРУГОЙ ФАЙЛ?
+# Как передавать настройку логера между модулями?
+# def log(func):
+#     def logged(*args, **kwargs):
+#         with open("server_log.log", "a", encoding="UTF-8") as f:
+#             dt = time.ctime(time.time())
+#             name = func.__name__
+#             caller = inspect.stack()[1].function
+#
+#             f.write("{} Function {} is called by {}-function\n".format(dt, name, caller))
+#
+#             res = func(*args, **kwargs)
+#
+#             f.write("{} Function {} finished with result: {}\n".format(dt, name, res))
+#
+#         return res
+#     return logged
+
