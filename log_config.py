@@ -28,6 +28,11 @@ main_log.propagate = False
 def log(func):
     def wrapped(*args, **kwargs):
         # добавляем вместо %(message)s аргументы нашей функции
+        # dt = time.ctime(time.time())
+        # name = func.__name__
+        # caller = inspect.stack()[1].function
+        # print("{} Function \"{}\" is called by \"{}\"-function\n".format(dt, name, caller))
+        # main_log.info("Function \"%s\" is called by %s", name, caller)
         main_log.info("%s ", tuple(args))
         r = func (*args, **kwargs)
         return r
